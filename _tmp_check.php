@@ -1,0 +1,15 @@
+<?php
+echo "start\n";
+require __DIR__.'/vendor/autoload.php';
+$app = require __DIR__.'/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$count = App\Models\Product::count();
+echo "products: $count\n";
+$first = App\Models\Product::with('images')->first();
+if($first){
+    echo "first: {$first->name}\n";
+    echo json_encode($first->gallery_image_urls)."\n";
+} else {
+    echo "no products found\n";
+}
+?>
