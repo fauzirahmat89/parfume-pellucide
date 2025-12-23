@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('title', 'Produk Pellucide')
+@section('meta_title', 'Katalog Produk Pellucide')
+@section('meta_description', 'Katalog lengkap skincare Pellucide: cream, serum, cleanser, toner untuk kulit tropis. Beli via Shopee, Tokopedia, atau WhatsApp.')
+@section('canonical', route('products.index'))
 
 @section('content')
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

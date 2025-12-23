@@ -1,0 +1,94 @@
+services:
+  # Application Service (Laravel)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: parfume_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+    networks:
+      - parfume_network
+    depends_on:
+      - db
+      - redis
+
+  # Web Server (Nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: parfume_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - parfume_network
+    depends_on:
+      - app
+
+  # Database (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: parfume_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: parfume_db
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_PASSWORD: password
+      MYSQL_USER: laravel
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - parfume_network
+
+  # Redis (for cache & queue)
+  redis:
+    image: redis:alpine
+    container_name: parfume_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - parfume_network
+
+  # Queue Worker
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: parfume_queue
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work
+    volumes:
+      - .:/var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+    networks:
+      - parfume_network
+    depends_on:
+      - db
+      - redis
+      - app
+
+networks:
+  parfume_network:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:
