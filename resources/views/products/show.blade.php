@@ -1,6 +1,10 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', $product->name . ' - Pellucide')
+@section('meta_title', $product->name . ' - Pellucide')
+@section('meta_description', $product->description ? \Illuminate\Support\Str::limit(strip_tags($product->description), 150) : 'Detail produk Pellucide untuk kulit tropis Indonesia.')
+@section('meta_image', $product->primary_image_url)
+@section('canonical', route('products.show', $product->slug))
 
 @section('content')
     <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12">
@@ -12,12 +16,12 @@
                         <div class="absolute inset-0 flex items-center justify-between px-4">
                             <button type="button" @click="prev" class="bg-black/60 text-white p-3 rounded-full border border-white/15 hover:bg-red-500/80">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                 </svg>
                             </button>
                             <button type="button" @click="next" class="bg-black/60 text-white p-3 rounded-full border border-white/15 hover:bg-red-500/80">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
                         </div>
@@ -40,7 +44,7 @@
                 </div>
             </div>
             <div class="space-y-4">
-                <p class="pill w-max text-white/80">{{ $product->category }} · {{ $product->size }}</p>
+                <p class="pill w-max text-white/80">{{ $product->category }} • {{ $product->size }}</p>
                 <h1 class="text-4xl font-semibold">{{ $product->name }}</h1>
                 <div class="text-2xl text-red-400 font-semibold">{{ $product->formatted_price }}</div>
 
@@ -79,7 +83,7 @@
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-semibold">Produk Terkait</h2>
             </div>
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse($related as $item)
                     @include('components.product-card', ['product' => $item])
                 @empty
@@ -88,6 +92,42 @@
             </div>
         </div>
     </section>
+@endsection
+
+@push('structured_data')
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'Product',
+    'name' => $product->name,
+    'image' => $product->gallery_image_urls ?: [$product->primary_image_url],
+    'description' => $product->description ?? '',
+    'brand' => [
+        '@type' => 'Brand',
+        'name' => 'Pellucide',
+    ],
+    'sku' => $product->slug,
+    'offers' => [
+        '@type' => 'Offer',
+        'priceCurrency' => 'IDR',
+        'price' => $product->price,
+        'availability' => 'https://schema.org/InStock',
+        'url' => route('products.show', $product->slug),
+    ],
+], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+</script>
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'BreadcrumbList',
+    'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => url('/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => 'Produk', 'item' => route('products.index')],
+        ['@type' => 'ListItem', 'position' => 3, 'name' => $product->name, 'item' => route('products.show', $product->slug)],
+    ],
+], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endpush
 
 @pushOnce('scripts')
 <script>
@@ -118,4 +158,3 @@
     }
 </script>
 @endPushOnce
-@endsection

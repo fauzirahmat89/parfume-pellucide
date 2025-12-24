@@ -12,7 +12,7 @@ class HomeController extends Controller
             ->hot()
             ->with('images')
             ->orderBy('sort_order')
-            ->take(4)
+            ->take(3)
             ->get();
 
         $products = Product::active()

@@ -1,12 +1,20 @@
 @props(['product'])
 
-<div class="product-card group cursor-pointer" x-data="productGallery(@js($product->gallery_image_urls))" @click="openDetail($event)">
+@php
+    $benefits = collect($product->benefits ?? [])->take(2);
+    $description = \Illuminate\Support\Str::limit($product->description ?? '', 80);
+@endphp
+
+<div class="product-card group cursor-pointer" x-data="productGallery(@js($product->gallery_image_urls), '{{ route('products.show', $product->slug) }}')" @click="openDetail($event)">
+    <div class="card-glow"></div>
+
     @if($product->is_hot)
-        <span class="hot-badge">HOT</span>
+        <span class="hot-badge">HOT PICK</span>
     @endif
 
     <div class="image-wrapper">
         <img :src="currentImage" alt="{{ $product->name }}" class="w-full h-full object-cover">
+        <div class="image-gradient"></div>
         <template x-if="images.length > 1">
             <div class="absolute inset-0 flex items-center justify-between px-3 opacity-0 group-hover:opacity-100 transition">
                 <button type="button" @click.stop="prev" class="no-detail bg-black/60 text-white p-2 rounded-full border border-white/15 hover:bg-red-500/80">
@@ -21,23 +29,44 @@
                 </button>
             </div>
         </template>
-        <div class="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1 bg-black/60 px-3 py-2 rounded-full">
+        <div class="image-dots">
             <template x-for="(img, index) in images" :key="index">
                 <span @click.stop="goTo(index)"
-                      :class="current === index ? 'bg-red-500' : 'bg-white/50'"
-                      class="no-detail w-2.5 h-2.5 rounded-full cursor-pointer transition"></span>
+                      :class="current === index ? 'opacity-100 bg-white' : 'opacity-60 bg-white/60'"
+                      class="no-detail dot"></span>
             </template>
         </div>
     </div>
 
-    <div class="p-4 flex-1 flex flex-col gap-2">
-        <div class="text-xs uppercase tracking-[0.2em] text-gray-300">{{ $product->category }}</div>
-        <h3 class="text-xl font-semibold">{{ $product->name }}</h3>
-        <div class="text-sm text-gray-300">{{ $product->size }}</div>
-        <div class="text-lg font-semibold text-red-400">{{ $product->formatted_price }}</div>
+    <div class="card-body">
+        <div class="flex items-start justify-between gap-3">
+            <div class="space-y-2">
+                <div class="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.18em] text-gray-300">
+                    <span class="meta-chip">{{ $product->category }}</span>
+                    <span class="meta-chip subtle">{{ $product->size }}</span>
+                </div>
+                <h3 class="text-lg font-semibold leading-snug">{{ $product->name }}</h3>
+                <p class="text-xs text-gray-300">{{ $description }}</p>
+            </div>
+            <div class="price-chip">
+                <span class="text-[11px] uppercase text-gray-300">Harga</span>
+                <div class="text-base font-semibold text-white">{{ $product->formatted_price }}</div>
+            </div>
+        </div>
+
+        @if($benefits->isNotEmpty())
+            <div class="mt-3 space-y-2">
+                @foreach($benefits as $benefit)
+                    <div class="benefit-line">
+                        <span class="benefit-dot"></span>
+                        <span class="text-xs text-gray-200">{{ $benefit }}</span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
-    <div class="buy-buttons px-4 pb-4 flex gap-2">
+    <div class="buy-buttons">
         @if($product->shopee_link)
             <a href="{{ $product->shopee_link }}" target="_blank" rel="noreferrer" class="no-detail btn-shopee">Shopee</a>
         @endif
@@ -52,9 +81,9 @@
 
 @pushOnce('scripts')
 <script>
-    function productGallery(images = []) {
+    function productGallery(images = [], detailUrl = '') {
         return {
-            detailUrl: "{{ route('products.show', $product->slug) }}",
+            detailUrl: detailUrl,
             images: images.length ? images : ["{{ asset('images/placeholder-product.svg') }}"],
             current: 0,
             get currentImage() {
